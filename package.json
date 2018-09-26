@@ -1,0 +1,21 @@
+{
+  "name": "byod",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ajax": "0.0.4",
+    "axios": "^0.18.0",
+    "sagebuild": "git+https://github.com/aws-samples/aws-sagemaker-build.git"
+  },
+  "bin": {
+    "byod": "train-init.js"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "description": ""
+}

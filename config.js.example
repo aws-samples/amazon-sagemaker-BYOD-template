@@ -1,0 +1,6 @@
+module.exports={
+    assetBucket:"",
+    assetPrefix:"BYOD",
+    profile:"Default",
+    region:"us-east-1"
+}

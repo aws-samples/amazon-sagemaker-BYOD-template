@@ -1,7 +1,34 @@
-## Amazon Sagemaker BYOD Template
+# SageMaker BYOD template and tutorial
 
-A project template for developing BYOD docker images for use in Amazon SageMaker.
+## Prerequisites
 
-## License Summary
+- Install Docker
+- Install node 8>
+- Install aws cli with credentials
 
-This sample code is made available under a modified MIT license. See the LICENSE file.
+## setup
+
+- install dependencies
+```shell 
+npm install
+```
+- copy config
+```shell
+cp config.js.example config.js
+```
+
+- edit config.js
+
+## Development
+
+### Training Container
+see [here](containers/train)
+
+### Serving Container
+see [here](containers/serve)
+
+## Deployment
+
+### SageMaker build
+see [here](template)
+
