@@ -50,29 +50,47 @@ Now that our mock directory is set up we will now write our training code. Note:
 The code and files our our training algorithm is in containers/train/code
 
 - edit the containers/train/code/train.py to look like this
-```py
+```python
 import json
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
+print("starting training")
 
 with open('/opt/ml/input/hyperparameters.json') as json_data:
     hyperparameters = json.load(json_data)
-    
+
+print("hyperparameters")
+pp.pprint(hyperparameters)
+
 with open('/opt/ml/input/inputdataconfig.json') as json_data:
     inputdata = json.load(json_data)
-print(inputdata)
+
+print("inputdata")
+pp.pprint(inputdata)
+
 train_data_file='/opt/ml/input/data/{}'.format(inputdata.keys()[0])
 
 with open(train_data_file) as json_data:
     data=json.load(json_data)
     
+print("data")
+pp.pprint(data)
+
 result=hyperparameters["x"]*data["y"]
 
-out={
+model={
     "result":result,
     "name":hyperparameters["name"]
 }
 
-with open('/opt/ml/model/model.json', 'w') as outfile:
-    json.dump(out, outfile)
+print("model")
+pp.pprint(model)
+output_file='/opt/ml/model/model.json'
+print("saving model to {}".format(output_file))
+
+with open(output_file, 'w') as outfile:
+    json.dump(model, outfile)
 ```
 - 
 
@@ -80,6 +98,11 @@ with open('/opt/ml/model/model.json', 'w') as outfile:
 Now you could edit the Dockerfile but we do not need to for this tutorial. 
 
 ### Test Locally
+- go to the /containers/train directory
+```shell
+cd ./containers/train
+```
+
 - in the /containers/train directory run
 ```shell 
 make build
@@ -108,7 +131,7 @@ Next, we will write the server docker container. This container needs to impleme
 ### Configure Mock Direcotory
 We need to configure our serve mock directory and enviromental variables.
 
-- edit /containers/serve/env.js to look like this:
+- edit /containers/server/env.js to look like this:
 ```js
 module.exports={
     message:"hello world"
@@ -118,26 +141,55 @@ module.exports={
 ```shell
 ./bin/serve-init.js
 ```
-this will set up of the mock directory and copy over the /mock/train/opt/ml/model to /mock/serve/opt/ml/model
+this will set up of the mock directory and copy over the /mock/train/opt/ml/model to /mock/server/opt/ml/model
 
 ### Write Serving Code
 Now we will write our web server
 
-- edit containers/serve/code/serve.py to look like this:
+- edit containers/server/code/serve.py to look like this:
 ```js
+from flask import Flask 
+from flask import json, request
+import os 
 
+with open('/opt/ml/model/model.json') as json_data:
+    model = json.load(json_data)
+    
+app=Flask(__name__)
+@app.route("/ping",methods=["GET"])
+def ping():
+    return "hello"
+
+@app.route("/invocations",methods=["POST"])
+def invoc():
+    return json.dumps({
+        "name": model["name"],
+        "message": os.environ["message"],
+        "result": request.json["value"]*model["result"]
+    })
+
+@app.route("/execution-parameters",methods=["GET"])
+def params():
+    return json.dumps({
+        "MaxConcurrentTransforms": 8,
+        "BatchStrategy": "MULTI_RECORD",
+        "MaxPayloadInMB": 6
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
 ```
 
 ### Edit Dockerfile
-You could edit the Dockerfile to customize the serve environment but we do not need to for this tutorial.
+You could edit the Dockerfile to customize the server environment but we do not need to for this tutorial.
 
 ### Test Locally
-- in the /containers/serve direcotory run:
+- in the /containers/server direcotory run:
 ```shell
 make build
 ```
 
-- edit the /containers/serve/test.js to look like this:
+- edit the /containers/server/test.js to look like this:
 ```js
 #! /usr/bin/env node
 var axios=require('axios')

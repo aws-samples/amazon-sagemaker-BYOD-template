@@ -7,7 +7,7 @@ var env=require('./env')
 
 var env_string=lodash.toPairs(env).map(x=>`--env ${x[0]}=${JSON.stringify(x[1])}`)
 var args=[
-    `--volume=$(realpath ../../)/mock/serve/opt:/opt`,
+    `--volume=$(realpath ../../)/mock/server/opt:/opt`,
     `-p 8080:8080`,
     `--env SAGEMAKER_BATCH=false`,
     `--env SAGEMAKER_MAX_PAYLOAD_IN_MB=0`,
