@@ -44,11 +44,11 @@ module.exports=Object.assign(
             {
                 "Effect": "Allow",
                 "Action": [
-                    "ssm:Get*",
-                    "ssm:Put*",
+                    "s3:*",
                 ],
                 "Resource":[
-                    {"Fn::Sub":"arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${SageBuild.Outputs.ParameterStore}"}
+                   {"Fn::Sub":"arn:aws:s3:::${SageBuild.Outputs.DataBucket}/*"},
+                   {"Fn::Sub":"arn:aws:s3:::${AssetBucket}/*"}
                 ]
            }
           ]

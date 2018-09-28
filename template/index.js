@@ -9,6 +9,9 @@ module.exports={
     },
     "AssetBucket":{
         "Type":"String"
+    },
+    "AssetPrefix":{
+        "Type":"String"
     }
   },
   "Outputs":{},

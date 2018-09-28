@@ -52,9 +52,9 @@ function run(stack,options={}){
     }
 
     if(options.prefix){
-        return `FRAUD-${full}`
+        return `${full}`
     }else{
-        return `FRAUD-${full}-${increment}` 
+        return `${full}-${increment}` 
     }
 
     function set(value){

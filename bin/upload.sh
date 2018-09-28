@@ -9,4 +9,6 @@ BLUE=$(tput setaf 4)
 RESET=$(tput sgr0)
 echo bootstrap bucket is $BLUE$BUCKET/$PREFIX$RESET
 
-aws s3 sync $__dirname/../build/ s3://$BUCKET/$PREFIX/ --delete  
+aws s3 sync $__dirname/../build/ s3://$BUCKET/$PREFIX/  
+aws s3 sync $__dirname/../template/assets s3://$BUCKET/$PREFIX/
+aws s3 sync $__dirname/../mock/train/opt/ml/input/data s3://$BUCKET/$PREFIX/data --delete

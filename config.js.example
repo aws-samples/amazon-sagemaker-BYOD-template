@@ -1,6 +1,13 @@
-module.exports={
+var out={
     assetBucket:"",
     assetPrefix:"BYOD",
-    profile:"Default",
-    region:"us-east-1"
+    namespace:"dev",
+    profile:"default",
+    region:"us-east-1",
+    parameters:{
+    }
 }
+out.parameters.AssetBucket=out.assetBucket
+out.parameters.AssetPrefix=out.assetPrefix
+
+module.exports=out

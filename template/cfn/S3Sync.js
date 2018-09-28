@@ -7,9 +7,17 @@ exports.handler=function(event,context,callback){
     console.log(JSON.stringify(event,null,2))
     var params=event.ResourceProperties
     delete params.ServiceToken
-    
+    delete params.Version
     if(event.RequestType!=="Delete"){
-        s3.putBucketNotificationConfiguration(params).promise()
+        s3.listObjectsV2(params.src).promise()
+        .then(results=>{
+            console.log(results)
+            return Promise.all(results.Contents.map(x=>s3.copyObject({
+                Bucket:params.dst.Bucket,
+                CopySource:`/${params.src.Bucket}/${x.Key}`,
+                Key:x.Key
+            }).promise()))
+        })
         .then(()=>response.send(event, context, response.SUCCESS))
         .catch(e=>{
             console.log(e)
@@ -18,5 +26,4 @@ exports.handler=function(event,context,callback){
     }else{
         response.send(event, context, response.SUCCESS)
     }
-}
-
+}   

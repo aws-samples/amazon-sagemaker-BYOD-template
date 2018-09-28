@@ -2,25 +2,32 @@
   "Parameters": {
     "Parameters": {
       "Type": "String",
-      "Default": "{}"
+      "Default": "{}",
+      "Description": "A JSON string that is merged into the SSM parameter store holding build parameters."
     },
     "AssetBucket": {
-      "Type": "String"
+      "Type": "String",
+      "Description": "the S3 bucket that holds the stack resources. Do not change unless you know what you are doing.",
+      "Default": "sagebuild"
     },
     "AssetPrefix": {
       "Type": "String",
-      "Default": "sagebuild"
+      "Description": "the S3 path that holds the stack resources. Do not change unless you know what you are doing.",
+      "Default": "artifacts/blog"
     },
     "ExternalTrainingPolicy": {
       "Type": "String",
+      "Description": "(Optional) the Arn of an IAM policy that is added to the Training role sagemaker uses",
       "Default": "EMPTY"
     },
     "ExternalHostingPolicy": {
       "Type": "String",
+      "Description": "(Optional) the Arn of an IAM policy that is added to the Model role sagemaker uses",
       "Default": "EMPTY"
     },
     "ConfigFramework": {
       "Type": "String",
+      "Description": "The Configuration of the stack.",
       "Default": "BYOD",
       "AllowedValues": [
         "AMAZON",
@@ -32,6 +39,7 @@
     "ConfigDeploy": {
       "Type": "String",
       "Default": "SAGEMAKER",
+      "Description": "The Type of deployment to use.",
       "AllowedValues": [
         "SAGEMAKER"
       ]
@@ -51,14 +59,9 @@
         "ml.t2.medium",
         "ml.m4.xlarge",
         "ml.p2.xlarge",
-        "USE_EXTERNAL"
+        "NONE"
       ],
       "Description": "The SageMaker Notebook Instance type that will be created and pre-populated with a sagebuild tutorial notebook"
-    },
-    "ExternalNotebook": {
-      "Type": "String",
-      "Default": "EMPTY",
-      "Description": "(Optional) A SageMaker Notebook instance to be pre-populated with a sagebuild tutorial notebook"
     },
     "ExternalDataBucket": {
       "Type": "String",
@@ -88,18 +91,21 @@
     "BranchBuildTrigger": {
       "Type": "CommaDelimitedList",
       "Default": "master",
-      "Description": "Comma seperated list of branchs in the code repository that trigger a build when changed"
+      "Description": "(Optional) Comma seperated list of branchs in the code repository that trigger a build when changed"
     },
     "EndpointConfigLambda": {
       "Type": "String",
+      "Description": "The Arn of a Lambda function to override the default Endpoint Config lambda",
       "Default": "EMPTY"
     },
     "TrainingConfigLambda": {
       "Type": "String",
+      "Description": "The Arn of a Lambda function to override the default Training Config lambda",
       "Default": "EMPTY"
     },
     "ModelConfigLambda": {
       "Type": "String",
+      "Description": "The Arn of a Lambda function to override the default Model Config lambda",
       "Default": "EMPTY"
     }
   },
@@ -150,30 +156,6 @@
           "Ref": "Type"
         },
         "DockerTrainDeploy"
-      ]
-    },
-    "InternalNoteBookInstance": {
-      "Fn::Not": [
-        {
-          "Fn::Equals": [
-            {
-              "Ref": "NoteBookInstanceType"
-            },
-            "USE_EXTERNAL"
-          ]
-        }
-      ]
-    },
-    "ExternalNoteBookInstance": {
-      "Fn::Not": [
-        {
-          "Fn::Equals": [
-            {
-              "Ref": "ExternalNotebook"
-            },
-            "EMPTY"
-          ]
-        }
       ]
     },
     "ExternalHostingPolicy": {
@@ -237,29 +219,13 @@
       ]
     },
     "NoteBookInstance": {
-      "Fn::Or": [
+      "Fn::Not": [
         {
-          "Fn::Not": [
+          "Fn::Equals": [
             {
-              "Fn::Equals": [
-                {
-                  "Ref": "NoteBookInstanceType"
-                },
-                "USE_EXTERNAL"
-              ]
-            }
-          ]
-        },
-        {
-          "Fn::Not": [
-            {
-              "Fn::Equals": [
-                {
-                  "Ref": "ExternalNotebook"
-                },
-                "EMPTY"
-              ]
-            }
+              "Ref": "NoteBookInstanceType"
+            },
+            "NONE"
           ]
         }
       ]
@@ -559,15 +525,7 @@
           ]
         },
         "Name": {
-          "Fn::If": [
-            "InternalNoteBookInstance",
-            {
-              "Ref": "AWS::StackName"
-            },
-            {
-              "Ref": "ExternalNotebook"
-            }
-          ]
+          "Ref": "AWS::StackName"
         }
       }
     },
@@ -1120,7 +1078,7 @@
               {
                 "Fn::If": [
                   "ConfigFrameworkBYOD",
-                  "import json\nimport os\ndef handler(event,context):\n    print(json.dumps(event,indent=2))\n    image=event[\"params\"].get(\"TrainingImage\",\"{}.dkr.ecr.{}.amazonaws.com/{}:Training_v{}\".format(\n        event[\"params\"][\"accountid\"],\n        os.environ[\"AWS_REGION\"],\n        event[\"params\"][\"ecrrepo\"],\n        event[\"params\"][\"version\"]\n    ))\n    return {\n      \"AlgorithmSpecification\": { \n        \"TrainingImage\":image, \n        \"TrainingInputMode\":event[\"params\"][\"inputmode\"]\n      },\n      \"InputDataConfig\": [ \n        {\n          \"ChannelName\": \"training\", \n          \"DataSource\": { \n            \"S3DataSource\": { \n              \"S3DataType\": \"S3Prefix\", \n              \"S3Uri\":f\"s3://{event['params']['databucket']}/train/\", \n              \"S3DataDistributionType\": \"FullyReplicated\" \n            }\n          },\n          \"CompressionType\": \"None\",\n          \"RecordWrapperType\": \"None\" \n        },\n      ],\n      \"OutputDataConfig\": { \n        'S3OutputPath':f\"s3://{event['params']['artifactbucket']}\", \n      },\n      \"ResourceConfig\": { \n        \"InstanceCount\": event[\"params\"][\"traininstancecount\"], \n        \"InstanceType\": event[\"params\"][\"traininstancetype\"], \n        \"VolumeSizeInGB\": int(event[\"params\"][\"trainvolumesize\"]), \n      },\n      \"RoleArn\":event[\"params\"][\"trainingrole\"], \n      \"StoppingCondition\": { \n        \"MaxRuntimeInSeconds\":int(event[\"params\"][\"trainmaxrun\"])*60*60\n      },\n      \"TrainingJobName\":\"{}-{}\".format(event[\"params\"][\"name\"],event[\"params\"][\"id\"]), \n      \"HyperParameters\":event[\"params\"][\"hyperparameters\"],\n      \"Tags\": []\n    }\n",
+                  "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \n\nexports.handler=function(event,context,callback){\n    console.log(JSON.stringify(event,null,2))\n\n    try{\n        image=event.params.TrainingImage || `${event.params.accountid}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${event.params.ecrrepo}:Training_v${event.params.version}`\n\n        var Hyperparameters=Object.assign({\n            sagemaker_job_name:`\"${event.params.name}-${event.params.id}\"`,\n            sagemaker_region:`\"${process.env.AWS_REGION}\"`,\n            checkpoint_path:`\"s3://${event.params.checkpointbucket}/${event.params.name}-${event.params.id}/checkpoints\"`,\n        },event.params.hyperparameters)\n\n        callback(null,{\n          \"AlgorithmSpecification\": { \n            \"TrainingImage\":image, \n            \"TrainingInputMode\":event[\"params\"][\"inputmode\"]\n          },\n          \"InputDataConfig\": [ \n            {\n              \"ChannelName\": \"training\", \n              \"DataSource\": { \n                \"S3DataSource\": { \n                  \"S3DataType\": \"S3Prefix\", \n                  \"S3Uri\":`s3://${event['params']['databucket']}/train/`, \n                  \"S3DataDistributionType\": \"FullyReplicated\" \n                }\n              },\n              \"CompressionType\": \"None\",\n              \"RecordWrapperType\": \"None\" \n            },\n          ],\n          \"OutputDataConfig\": { \n            'S3OutputPath':`s3://${event['params']['artifactbucket']}`, \n          },\n          \"ResourceConfig\": { \n            \"InstanceCount\": event[\"params\"][\"traininstancecount\"], \n            \"InstanceType\": event[\"params\"][\"traininstancetype\"], \n            \"VolumeSizeInGB\": parseInt(event[\"params\"][\"trainvolumesize\"]), \n          },\n          \"RoleArn\":event[\"params\"][\"trainingrole\"], \n          \"StoppingCondition\": { \n            \"MaxRuntimeInSeconds\":parseInt(event[\"params\"][\"trainmaxrun\"])*60*60\n          },\n          \"TrainingJobName\":`${event.params.name}-${event.params.id}`, \n          \"HyperParameters\":Hyperparameters,\n          \"Tags\": []\n        })\n    }catch(e){\n        callback(new Error(e))\n    }\n}\n",
                   {
                     "Fn::If": [
                       "ConfigFrameworkMXNET",
@@ -1128,8 +1086,8 @@
                       {
                         "Fn::If": [
                           "ConfigFrameworkTENSORFLOW",
-                          "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar s3=new aws.S3()\n\nexports.handler=function(event,context,callback){\n    console.log(JSON.stringify(event,null,2))\n    var key= `versions/training/v${event.params.version}.tar.gz`\n    try{\n        s3.copyObject({\n            CopySource:event.params.trainsourcefile.match(/s3:\\/\\/(.*)/)[1],\n            Bucket:event.params.codebucket,\n            Key:key\n        }).promise()\n        .then(function(){\n            var others=event.params.hyperparameters || {} \n            Object.keys(others).forEach(function(key){\n                others[key]=`${JSON.stringify(others[key])}` \n            })\n            var Hyperparameters=Object.assign({\n                sagemaker_container_log_level:event.params.containerloglevel,\n                sagemaker_enable_cloudwatch_metrics:event.params.enablecloudwatchmetrics,\n                sagemaker_job_name:`\"${event.params.name}-${event.params.id}\"`,\n                sagemaker_program:`\"${event.params.trainentrypoint}\"`,\n                sagemaker_region:`\"${process.env.AWS_REGION}\"`,\n                sagemaker_submit_directory:`\"s3://${event.params.codebucket}/${key}\"`,\n            },others)\n\n            Object.keys(Hyperparameters).forEach(x=>{\n                var value=Hyperparameters[x]\n                Hyperparameters[x]= typeof value===\"string\" ? value : JSON.stringify(value)\n            })\n            callback(null,{\n              \"AlgorithmSpecification\": { \n                \"TrainingImage\":create_image_uri(event.params), \n                \"TrainingInputMode\":event.params.inputmode\n              },\n              \"OutputDataConfig\": { \n                'S3OutputPath':`s3://${event.params.artifactbucket}`, \n              },\n              \"ResourceConfig\": { \n                \"InstanceCount\": event.params.traininstancecount, \n                \"InstanceType\": event.params.traininstancetype, \n                \"VolumeSizeInGB\":parseInt(event.params.trainvolumesize), \n              },\n              \"RoleArn\":event[\"params\"][\"trainingrole\"], \n              \"StoppingCondition\": { \n                \"MaxRuntimeInSeconds\":parseInt(event.params.trainmaxrun)*60*60\n              },\n              \"TrainingJobName\":`${event.params.name}-${event.params.id}`, \n              \"HyperParameters\":Hyperparameters,\n              \"Tags\": []\n            })\n        })\n        .catch(x=>callback(new Error(x)))\n    }catch(e){\n        callback(new Error(e))\n    }\n}\n\nfunction create_image_uri(params){\n    var account='520713654638'\n    var instance=params.traininstancetype.split('.')[1][0]===\"p\" ? \"gpu\" : \"cpu\"\n    return `${account}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/sagemaker-tensorflow:${params.tensorflowversion}-${instance}-${params.pyversion}`\n}\n",
-                          "import json\nimport os\ndef handler(event,context):\n    print(json.dumps(event,indent=2))\n    image=event[\"params\"].get(\"TrainingImage\",\"{}.dkr.ecr.{}.amazonaws.com/{}:Training_v{}\".format(\n        event[\"params\"][\"accountid\"],\n        os.environ[\"AWS_REGION\"],\n        event[\"params\"][\"ecrrepo\"],\n        event[\"params\"][\"version\"]\n    ))\n    return {\n      \"AlgorithmSpecification\": { \n        \"TrainingImage\":image, \n        \"TrainingInputMode\":event[\"params\"][\"inputmode\"]\n      },\n      \"InputDataConfig\": [ \n        {\n          \"ChannelName\": \"training\", \n          \"DataSource\": { \n            \"S3DataSource\": { \n              \"S3DataType\": \"S3Prefix\", \n              \"S3Uri\":f\"s3://{event['params']['databucket']}/train/\", \n              \"S3DataDistributionType\": \"FullyReplicated\" \n            }\n          },\n          \"CompressionType\": \"None\",\n          \"RecordWrapperType\": \"None\" \n        },\n      ],\n      \"OutputDataConfig\": { \n        'S3OutputPath':f\"s3://{event['params']['artifactbucket']}\", \n      },\n      \"ResourceConfig\": { \n        \"InstanceCount\": event[\"params\"][\"traininstancecount\"], \n        \"InstanceType\": event[\"params\"][\"traininstancetype\"], \n        \"VolumeSizeInGB\": int(event[\"params\"][\"trainvolumesize\"]), \n      },\n      \"RoleArn\":event[\"params\"][\"trainingrole\"], \n      \"StoppingCondition\": { \n        \"MaxRuntimeInSeconds\":int(event[\"params\"][\"trainmaxrun\"])*60*60\n      },\n      \"TrainingJobName\":\"{}-{}\".format(event[\"params\"][\"name\"],event[\"params\"][\"id\"]), \n      \"HyperParameters\":event[\"params\"][\"hyperparameters\"],\n      \"Tags\": []\n    }\n"
+                          "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar s3=new aws.S3()\n\nexports.handler=function(event,context,callback){\n    console.log(JSON.stringify(event,null,2))\n    var key= `versions/training/v${event.params.version}.tar.gz`\n    try{\n        s3.copyObject({\n            CopySource:event.params.trainsourcefile.match(/s3:\\/\\/(.*)/)[1],\n            Bucket:event.params.codebucket,\n            Key:key\n        }).promise()\n        .then(function(){\n            var others=event.params.hyperparameters || {} \n            Object.keys(others).forEach(function(key){\n                others[key]=`${JSON.stringify(others[key])}` \n            })\n            var Hyperparameters=Object.assign({\n                sagemaker_container_log_level:event.params.containerloglevel,\n                sagemaker_enable_cloudwatch_metrics:event.params.enablecloudwatchmetrics,\n                sagemaker_job_name:`\"${event.params.name}-${event.params.id}\"`,\n                sagemaker_program:`\"${event.params.trainentrypoint}\"`,\n                sagemaker_region:`\"${process.env.AWS_REGION}\"`,\n                sagemaker_submit_directory:`\"s3://${event.params.codebucket}/${key}\"`,\n                checkpoint_path:`\"s3://${event.params.checkpointbucket}/${event.params.name}-${event.params.id}/checkpoints\"`,\n            },others)\n\n            Object.keys(Hyperparameters).forEach(x=>{\n                var value=Hyperparameters[x]\n                Hyperparameters[x]= typeof value===\"string\" ? value : JSON.stringify(value)\n            })\n            callback(null,{\n              \"AlgorithmSpecification\": { \n                \"TrainingImage\":create_image_uri(event.params), \n                \"TrainingInputMode\":event.params.inputmode\n              },\n              \"OutputDataConfig\": { \n                'S3OutputPath':`s3://${event.params.artifactbucket}`, \n              },\n              \"ResourceConfig\": { \n                \"InstanceCount\": event.params.traininstancecount, \n                \"InstanceType\": event.params.traininstancetype, \n                \"VolumeSizeInGB\":parseInt(event.params.trainvolumesize), \n              },\n              \"RoleArn\":event[\"params\"][\"trainingrole\"], \n              \"StoppingCondition\": { \n                \"MaxRuntimeInSeconds\":parseInt(event.params.trainmaxrun)*60*60\n              },\n              \"TrainingJobName\":`${event.params.name}-${event.params.id}`, \n              \"HyperParameters\":Hyperparameters,\n              \"Tags\": []\n            })\n        })\n        .catch(x=>callback(new Error(x)))\n    }catch(e){\n        callback(new Error(e))\n    }\n}\n\nfunction create_image_uri(params){\n    var account='520713654638'\n    var instance=params.traininstancetype.split('.')[1][0]===\"p\" ? \"gpu\" : \"cpu\"\n    return `${account}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/sagemaker-tensorflow:${params.tensorflowversion}-${instance}-${params.pyversion}`\n}\n",
+                          "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \n\nexports.handler=function(event,context,callback){\n    console.log(JSON.stringify(event,null,2))\n\n    try{\n        image=event.params.TrainingImage || `${event.params.accountid}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${event.params.ecrrepo}:Training_v${event.params.version}`\n\n        var Hyperparameters=Object.assign({\n            sagemaker_job_name:`\"${event.params.name}-${event.params.id}\"`,\n            sagemaker_region:`\"${process.env.AWS_REGION}\"`,\n            checkpoint_path:`\"s3://${event.params.checkpointbucket}/${event.params.name}-${event.params.id}/checkpoints\"`,\n        },event.params.hyperparameters)\n\n        callback(null,{\n          \"AlgorithmSpecification\": { \n            \"TrainingImage\":image, \n            \"TrainingInputMode\":event[\"params\"][\"inputmode\"]\n          },\n          \"InputDataConfig\": [ \n            {\n              \"ChannelName\": \"training\", \n              \"DataSource\": { \n                \"S3DataSource\": { \n                  \"S3DataType\": \"S3Prefix\", \n                  \"S3Uri\":`s3://${event['params']['databucket']}/train/`, \n                  \"S3DataDistributionType\": \"FullyReplicated\" \n                }\n              },\n              \"CompressionType\": \"None\",\n              \"RecordWrapperType\": \"None\" \n            },\n          ],\n          \"OutputDataConfig\": { \n            'S3OutputPath':`s3://${event['params']['artifactbucket']}`, \n          },\n          \"ResourceConfig\": { \n            \"InstanceCount\": event[\"params\"][\"traininstancecount\"], \n            \"InstanceType\": event[\"params\"][\"traininstancetype\"], \n            \"VolumeSizeInGB\": parseInt(event[\"params\"][\"trainvolumesize\"]), \n          },\n          \"RoleArn\":event[\"params\"][\"trainingrole\"], \n          \"StoppingCondition\": { \n            \"MaxRuntimeInSeconds\":parseInt(event[\"params\"][\"trainmaxrun\"])*60*60\n          },\n          \"TrainingJobName\":`${event.params.name}-${event.params.id}`, \n          \"HyperParameters\":Hyperparameters,\n          \"Tags\": []\n        })\n    }catch(e){\n        callback(new Error(e))\n    }\n}\n"
                         ]
                       }
                     ]
@@ -1154,7 +1112,7 @@
             {
               "Fn::If": [
                 "ConfigFrameworkBYOD",
-                "python3.6",
+                "nodejs6.10",
                 {
                   "Fn::If": [
                     "ConfigFrameworkMXNET",
@@ -1163,7 +1121,7 @@
                       "Fn::If": [
                         "ConfigFrameworkTENSORFLOW",
                         "nodejs6.10",
-                        "python3.6"
+                        "nodejs6.10"
                       ]
                     }
                   ]
@@ -1912,8 +1870,8 @@
           "ZipFile": {
             "Fn::If": [
               "ConfigDeploySAGEMAKER",
-              "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar sagemaker=new aws.SageMaker()\n\nexports.handler=(event,context,cb)=>{\n    console.log(\"EVENT:\",JSON.stringify(event,null,2))\n    event.args.training.Tags=event.args.training.Tags || []\n    event.args.training.Tags.push({\n        Key:\"sagebuild:BuildStack\",\n        Value:event.params.stackname\n    })\n\n    event.args.training.HyperParameters.checkpoint_path=`\"s3://${event.params.checkpointbucket}/${event.params.name}-${event.params.id}/checkpoints\"`\n\n    sagemaker.createTrainingJob(event.args.training).promise()\n    .then(result=>cb(null,result))\n    .catch(x=>cb(new Error(x)))\n}\n",
-              "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar sagemaker=new aws.SageMaker()\n\nexports.handler=(event,context,cb)=>{\n    console.log(\"EVENT:\",JSON.stringify(event,null,2))\n    event.args.training.Tags=event.args.training.Tags || []\n    event.args.training.Tags.push({\n        Key:\"sagebuild:BuildStack\",\n        Value:event.params.stackname\n    })\n\n    event.args.training.HyperParameters.checkpoint_path=`\"s3://${event.params.checkpointbucket}/${event.params.name}-${event.params.id}/checkpoints\"`\n\n    sagemaker.createTrainingJob(event.args.training).promise()\n    .then(result=>cb(null,result))\n    .catch(x=>cb(new Error(x)))\n}\n"
+              "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar sagemaker=new aws.SageMaker()\n\nexports.handler=(event,context,cb)=>{\n    console.log(\"EVENT:\",JSON.stringify(event,null,2))\n    event.args.training.Tags=event.args.training.Tags || []\n    event.args.training.Tags.push({\n        Key:\"sagebuild:BuildStack\",\n        Value:event.params.stackname\n    })\n\n    sagemaker.createTrainingJob(event.args.training).promise()\n    .then(result=>cb(null,result))\n    .catch(x=>cb(new Error(x)))\n}\n",
+              "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar sagemaker=new aws.SageMaker()\n\nexports.handler=(event,context,cb)=>{\n    console.log(\"EVENT:\",JSON.stringify(event,null,2))\n    event.args.training.Tags=event.args.training.Tags || []\n    event.args.training.Tags.push({\n        Key:\"sagebuild:BuildStack\",\n        Value:event.params.stackname\n    })\n\n    sagemaker.createTrainingJob(event.args.training).promise()\n    .then(result=>cb(null,result))\n    .catch(x=>cb(new Error(x)))\n}\n"
             ]
           }
         },
@@ -2361,12 +2319,15 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
-          "ZipFile": "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar sagemaker=new aws.SageMaker()\n\nexports.handler=(event,context,cb)=>{\n    console.log(\"EVENT:\",JSON.stringify(event,null,2))\n    \n    return sagemaker.describeEndpoint({\n        EndpointName:process.env.ENDPOINT\n    }).promise()\n    .then(function(result){\n        //get endpoint config\n    })\n    .then(function(result){\n        return sagemaker.updateEndpoint({\n            EndpointConfigName://prev tag,\n            EndpointName:process.env.ENDPOINT\n        }).promise()\n    })\n    .then(()=>cb(null))\n    .catch(x=>cb(new Error(x)))\n}\n"
+          "ZipFile": "var aws=require('aws-sdk')\naws.config.region=process.env.AWS_REGION \nvar sagemaker=new aws.SageMaker()\n\nexports.handler=(event,context,cb)=>{\n    console.log(\"EVENT:\",JSON.stringify(event,null,2))\n    \n    return sagemaker.describeEndpoint({\n        EndpointName:process.env.ENDPOINT\n    }).promise()\n    .then(function(result){\n        var config=result.EndpointConfigName\n        return sagemaker.describeEndpointConfig({\n            EndpointConfigName:config\n        }).promise()\n    })\n    .then(function(result){\n        return sagemaker.listTags({\n            ResourceArn:result.EndpointConfigArn\n        }).promise()\n    })\n    .then(function(result){\n        previous=result.Tags.filter(x=>x.Key=\"sagebuild:previous\")[0].Value\n        return sagemaker.updateEndpoint({\n            EndpointConfigName:previous,\n            EndpointName:process.env.ENDPOINT\n        }).promise()\n    })\n    .then(console.log)\n    .then(()=>cb(null))\n    .catch(x=>cb(new Error(x)))\n}\n"
         },
         "Environment": {
           "Variables": {
             "ENDPOINT": {
-              "Ref": "AWS::StackName"
+              "Fn::GetAtt": [
+                "Variables",
+                "EndpointName"
+              ]
             }
           }
         },
@@ -2399,7 +2360,8 @@
         },
         "Path": "/",
         "ManagedPolicyArns": [
-          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess"
         ]
       }
     },
@@ -2430,7 +2392,7 @@
       "Properties": {
         "Type": "String",
         "Value": {
-          "Fn::Sub": "{\"assetbucket\":\"${AssetBucket}\",\"assetprefix\":\"${AssetPrefix}\",\"externaltrainingpolicy\":\"${ExternalTrainingPolicy}\",\"externalhostingpolicy\":\"${ExternalHostingPolicy}\",\"configframework\":\"${ConfigFramework}\",\"configdeploy\":\"${ConfigDeploy}\",\"type\":\"${Type}\",\"notebookinstancetype\":\"${NoteBookInstanceType}\",\"externalnotebook\":\"${ExternalNotebook}\",\"externaldatabucket\":\"${ExternalDataBucket}\",\"externalcodebucket\":\"${ExternalCodeBucket}\",\"externallaunchtopic\":\"${ExternalLaunchTopic}\",\"externalcodecommitrepo\":\"${ExternalCodeCommitRepo}\",\"externalgithubrepo\":\"${ExternalGithubRepo}\",\"endpointconfiglambda\":\"${EndpointConfigLambda}\",\"trainingconfiglambda\":\"${TrainingConfigLambda}\",\"modelconfiglambda\":\"${ModelConfigLambda}\",\"maxtrainingjobs\":1,\"configtrain\":\"SAGEMAKER\",\"maxparalleltrainingjobs\":1,\"checkpointbucket\":\"${CheckPointBucket}\",\"endpointname\":\"${Variables.EndpointName}\",\"stackname\":\"${AWS::StackName}\",\"mxnetversion\":\"1.1\",\"hyperparameters\":{},\"tensorflowversion\":\"1.8\",\"ecrrepo\":\"${ECRRepo}\",\"modelrole\":\"${ModelRole.Arn}\",\"trainingrole\":\"${TrainingRole.Arn}\",\"databucket\":\"${Variables.DataBucket}\",\"artifactbucket\":\"${ArtifactBucket}\",\"statustopic\":\"${TrainStatusTopic}\",\"accountid\":\"${AWS::AccountId}\",\"codebucket\":\"${CodeBucket}\",\"projectname\":\"${ImageBuild}\",\"trainentrypoint\":\"none\",\"hostinstancecount\":\"1\",\"hostinstancetype\":\"ml.t2.medium\",\"traininstancecount\":\"1\",\"traininstancetype\":\"ml.m5.large\",\"trainsourcefile\":\"none\",\"pyversion\":\"py3\",\"trainvolumesize\":\"10\",\"trainmaxrun\":\"4\",\"inputmode\":\"File\",\"hostentrypoint\":\"none\",\"hostsourcefile\":\"none\",\"enablecloudwatchmetrics\":\"false\",\"containerloglevel\":\"200\",\"trainingsteps\":\"1000\",\"evaluationsteps\":\"100\",\"requirementsfile\":\"none\",\"modelhostingenvironment\":{}}"
+          "Fn::Sub": "{\"assetbucket\":\"${AssetBucket}\",\"assetprefix\":\"${AssetPrefix}\",\"externaltrainingpolicy\":\"${ExternalTrainingPolicy}\",\"externalhostingpolicy\":\"${ExternalHostingPolicy}\",\"configframework\":\"${ConfigFramework}\",\"configdeploy\":\"${ConfigDeploy}\",\"type\":\"${Type}\",\"notebookinstancetype\":\"${NoteBookInstanceType}\",\"externaldatabucket\":\"${ExternalDataBucket}\",\"externalcodebucket\":\"${ExternalCodeBucket}\",\"externallaunchtopic\":\"${ExternalLaunchTopic}\",\"externalcodecommitrepo\":\"${ExternalCodeCommitRepo}\",\"externalgithubrepo\":\"${ExternalGithubRepo}\",\"endpointconfiglambda\":\"${EndpointConfigLambda}\",\"trainingconfiglambda\":\"${TrainingConfigLambda}\",\"modelconfiglambda\":\"${ModelConfigLambda}\",\"maxtrainingjobs\":1,\"configtrain\":\"SAGEMAKER\",\"maxparalleltrainingjobs\":1,\"checkpointbucket\":\"${CheckPointBucket}\",\"endpointname\":\"${Variables.EndpointName}\",\"stackname\":\"${AWS::StackName}\",\"mxnetversion\":\"1.1\",\"hyperparameters\":{},\"tensorflowversion\":\"1.8\",\"ecrrepo\":\"${ECRRepo}\",\"modelrole\":\"${ModelRole.Arn}\",\"trainingrole\":\"${TrainingRole.Arn}\",\"databucket\":\"${Variables.DataBucket}\",\"artifactbucket\":\"${ArtifactBucket}\",\"statustopic\":\"${TrainStatusTopic}\",\"accountid\":\"${AWS::AccountId}\",\"codebucket\":\"${CodeBucket}\",\"projectname\":\"${ImageBuild}\",\"trainentrypoint\":\"none\",\"hostinstancecount\":\"1\",\"hostinstancetype\":\"ml.t2.medium\",\"traininstancecount\":\"1\",\"traininstancetype\":\"ml.m5.large\",\"trainsourcefile\":\"none\",\"pyversion\":\"py3\",\"trainvolumesize\":\"10\",\"trainmaxrun\":\"4\",\"inputmode\":\"File\",\"hostentrypoint\":\"none\",\"hostsourcefile\":\"none\",\"enablecloudwatchmetrics\":\"false\",\"containerloglevel\":\"200\",\"trainingsteps\":\"1000\",\"evaluationsteps\":\"100\",\"requirementsfile\":\"none\",\"modelhostingenvironment\":{}}"
         }
       }
     },
@@ -3214,7 +3176,7 @@
     },
     "SageMakerNotebookInstance": {
       "Type": "AWS::SageMaker::NotebookInstance",
-      "Condition": "InternalNoteBookInstance",
+      "Condition": "NoteBookInstance",
       "Properties": {
         "InstanceType": "ml.t2.medium",
         "NotebookInstanceName": {
@@ -3239,6 +3201,7 @@
     },
     "SageMakerNotebookLifecycle": {
       "Type": "AWS::SageMaker::NotebookInstanceLifecycleConfig",
+      "Condition": "NoteBookInstance",
       "Properties": {
         "OnCreate": [
           {
@@ -3253,7 +3216,7 @@
     },
     "InternalNotebookRole": {
       "Type": "AWS::IAM::Role",
-      "Condition": "InternalNoteBookInstance",
+      "Condition": "NoteBookInstance",
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
@@ -3276,41 +3239,10 @@
         ]
       }
     },
-    "ExternalNotebookRole": {
-      "Type": "Custom::Variables",
-      "Condition": "ExternalNoteBookInstance",
-      "Properties": {
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "SageMakerNotebookRoleLambda",
-            "Arn"
-          ]
-        },
-        "NotebookInstanceName": {
-          "Fn::GetAtt": [
-            "Notebook",
-            "Name"
-          ]
-        }
-      }
-    },
     "NotebookPolicy": {
       "Type": "AWS::IAM::ManagedPolicy",
       "Condition": "NoteBookInstance",
       "Properties": {
-        "Roles": [
-          {
-            "Fn::If": [
-              "InternalNoteBookInstance",
-              {
-                "Ref": "AWS::NoValue"
-              },
-              {
-                "Ref": "ExternalNotebookRole"
-              }
-            ]
-          }
-        ],
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -3480,7 +3412,7 @@
       "Type": "AWS::Lambda::Function",
       "Properties": {
         "Code": {
-          "ZipFile": "var aws=require(\"aws-sdk\");aws.config.region=process.env.AWS_REGION||\"us-east-1\";var step=new aws.StepFunctions,sns=new aws.SNS;function stop(){return getExecution().then(result=>result&&\"RUNNING\"===result.status?step.stopExecution({executionArn:result.executionArn,cause:\"ALEXA manual stop\"}).promise().then(()=>\"Current Job has been stopped\"):\"there is no job to stop\")}function start(){return getExecution().then(result=>result&&\"RUNNING\"===result.status?\"A job is currently executing\":sns.publish({Message:\"{}\",TopicArn:process.env.START_TOPIC}).promise().then(()=>\"A new job has been started\"))}function getInfo(){return getExecution().then(info=>step.getExecutionHistory({executionArn:info.executionArn,reverseOrder:!0}).promise().then(history=>{if(info.stopDate)return`The latest job ended in status ${info.status}, was started at ${date(info.startDate)}, and ended at ${date(info.stopDate)}`;var step=history.events.map(x=>{return Object.keys(x).map(y=>x[y].name).find(y=>y)}).filter(x=>x)[0];return`the current job was started at ${date(info.startDate)}, is in state ${info.status}, and the current step is ${step?step.replace(/([a-z])([A-Z])/g,\"$1 $2\"):\"not known\"}`}))}function getStatus(){return getExecution().then(result=>{if(result)var message=`Your job is in state ${result.status}`;else message=\"You have not run any jobs\";return message})}function getExecution(){return step.listExecutions({stateMachineArn:process.env.STEPFUNCTION_ARN}).promise().then(result=>result.executions[0])}function date(string){var d=new Date(string);return`${d.toUTCString().match(/(.*, \\S* \\S*)/)[1]} at ${d.toUTCString().match(/.*, \\S* \\S* \\S* (\\S*:\\S*):.*/)[1]} UTC`}function Response(callback){return function(message){callback(null,{version:\"1.0\",sessionAttributes:{},response:{outputSpeech:{type:\"PlainText\",text:message},shouldEndSession:!0}})}}exports.handler=function(event,context,callback){console.log(JSON.stringify(event,null,2));var response=Response(callback);try{if(\"LaunchRequest\"===event.request.type)response(\"Welcome to sagebuild, you can start,stop or get the status of your build by saying start, stop, status, or info\");else if(\"IntentRequest\"===event.request.type)switch(event.request.intent.name){case\"AMAZON.CancelIntent\":case\"AMAZON.StopIntent\":stop().then(response);break;case\"AMAZON.HelpIntent\":response(\"You can start, stop or get the status of your build by saying start, stop, or status\");break;case\"Start\":start().then(response);break;case\"Status\":getStatus().then(response);break;case\"Info\":getInfo().then(response)}else\"SessionEndedRequest\"===event.request.type&&callback(null)}catch(e){console.log(e),callback(e)}};"
+          "ZipFile": "var aws=require(\"aws-sdk\");aws.config.region=process.env.AWS_REGION||\"us-east-1\";var step=new aws.StepFunctions,sns=new aws.SNS;function stop(){return getExecution().then(result=>result&&\"RUNNING\"===result.status?step.stopExecution({executionArn:result.executionArn,cause:\"ALEXA manual stop\"}).promise().then(()=>\"Current Job has been stopped\"):\"there is no job to stop\")}function start(){return getExecution().then(result=>result&&\"RUNNING\"===result.status?\"A job is currently executing\":sns.publish({Message:\"{}\",TopicArn:process.env.START_TOPIC}).promise().then(()=>\"A new job has been started\"))}function getInfo(){return getExecution().then(info=>step.getExecutionHistory({executionArn:info.executionArn,reverseOrder:!0}).promise().then(history=>{if(info.stopDate)return`The latest job ended in status ${info.status}, was started at ${date(info.startDate)}, and ended at ${date(info.stopDate)}`;var step=history.events.map(x=>{return Object.keys(x).map(y=>x[y].name).find(y=>y)}).filter(x=>x)[0];return`the current job was started at ${date(info.startDate)}, is in state ${info.status}, and the current step is ${step?step.replace(/([a-z])([A-Z])/g,\"$1 $2\"):\"not known\"}`}))}function getStatus(){return getExecution().then(result=>{if(result)var message=`Your job is in state ${result.status}`;else message=\"You have not run any jobs\";return message})}function getExecution(){return step.listExecutions({stateMachineArn:process.env.STEPFUNCTION_ARN}).promise().then(result=>result.executions[0])}function date(string){var d=new Date(string);return`${d.toUTCString().match(/(.*, \\S* \\S*)/)[1]} at ${d.toUTCString().match(/.*, \\S* \\S* \\S* (\\S*:\\S*):.*/)[1]} UTC`}function Response(callback,end=!1){return function(message){callback(null,{version:\"1.0\",sessionAttributes:{},response:{outputSpeech:{type:\"PlainText\",text:message},shouldEndSession:end}})}}exports.handler=function(event,context,callback){console.log(JSON.stringify(event,null,2));var response=Response(callback);try{if(\"LaunchRequest\"===event.request.type)response(\"Welcome to sagebuild, you can start,stop or get the status of your build by saying start, stop, status, or info\");else if(\"IntentRequest\"===event.request.type)switch(event.request.intent.name){case\"AMAZON.CancelIntent\":case\"AMAZON.StopIntent\":stop().then(response);break;case\"AMAZON.HelpIntent\":response(\"You can start, stop or get the status of your build by saying start, stop, or status\");break;case\"Start\":start().then(response);break;case\"Status\":getStatus().then(response);break;case\"Info\":getInfo().then(response)}else\"SessionEndedRequest\"===event.request.type&&callback(null)}catch(e){console.log(e),callback(e)}};"
         },
         "Handler": "index.handler",
         "Environment": {
@@ -3567,40 +3499,10 @@
           "Parameters": [
             "ExternalTrainingPolicy",
             "ExternalHostingPolicy",
-            "TrainEntryPoint",
-            "TrainInstanceCount",
-            "TrainInstanceType",
-            "TrainSourceDir",
-            "TrainVolumeSize",
-            "InputMode",
-            "HostEntryPoint",
-            "HostSourceDir",
-            "ContainerLogLevel",
-            "HyperParameters",
-            "ModelHostingEnvironment",
             "ConfigFramework",
             "ConfigDeploy",
             "Type",
-            "TrainMaxRun"
-          ]
-        },
-        {
-          "Label": {
-            "default": "MXNet Parameters"
-          },
-          "Parameters": [
-            "PyVersion",
-            "EnableCloudwatchMetrics"
-          ]
-        },
-        {
-          "Label": {
-            "default": "Tensorflow Parameters"
-          },
-          "Parameters": [
-            "EvaluationSteps",
-            "RequirementsFile",
-            "CheckpointPath"
+            "Parameters"
           ]
         },
         {
@@ -3619,7 +3521,8 @@
           "Parameters": [
             "BranchBuildTrigger",
             "ExternalCodeCommitRepo",
-            "ExternalGithubRepo"
+            "ExternalGithubRepo",
+            "ExternalCodeBucket"
           ]
         },
         {
@@ -3628,8 +3531,7 @@
           },
           "Parameters": [
             "Type",
-            "NoteBookInstanceType",
-            "ExternalNotebook"
+            "NoteBookInstanceType"
           ]
         },
         {
@@ -3638,28 +3540,44 @@
           },
           "Parameters": [
             "EndpointConfigLambda",
-            "InferenceDockerfilePathLambda",
-            "TrainingDockerfilePathLambda",
             "TrainingConfigLambda",
             "ModelConfigLambda"
           ]
         }
       ],
       "ParameterLabels": {
+        "ExternalTrainingPolicy": {
+          "default": "Additional Training IAM Policy"
+        },
+        "ExternalHostingPolicy": {
+          "default": "Additional Hosting IAM Policy"
+        },
+        "ConfigFramework": {
+          "default": "Configuration"
+        },
+        "EndpointConfigLambda": {
+          "default": "Endpoint Config Lambda Override"
+        },
+        "TrainingConfigLambda": {
+          "default": "Training Config Lambda Override"
+        },
+        "ModelConfigLambda": {
+          "default": "Model Config Lambda Override"
+        },
+        "ExternalCodeBucket": {
+          "default": "External Code Bucket"
+        },
         "NoteBookInstanceType": {
           "default": "SageMaker Notebook Instance Type"
         },
-        "ExternalNotebook": {
-          "default": "External SageMaker Notebookt to use"
-        },
         "ExternalDataBucket": {
-          "default": "Training Data Bucket"
+          "default": "External Training Data Bucket"
         },
         "BranchBuildTrigger": {
           "default": "Repository trigger branch"
         },
         "ExternalCodeCommitRepo": {
-          "default": "AWS CodeCommit Repository"
+          "default": "External AWS CodeCommit Repository"
         },
         "ExternalGithubRepo": {
           "default": "External Github Repository"

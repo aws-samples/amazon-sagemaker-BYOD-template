@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "up":"make && ./bin/upload.sh && ./template/bin/launch.js",
+    "update":"make && ./bin/upload.sh && ./template/bin/update.js",
+    "down":"make && ./bin/upload.sh && ./template/bin/delete.js"
   },
   "author": "",
   "license": "ISC",

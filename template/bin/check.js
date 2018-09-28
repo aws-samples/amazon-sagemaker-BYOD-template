@@ -8,7 +8,7 @@ var s3=new aws.S3()
 var chalk=require('chalk')
 var bucket=require('./config').assetBucket
 var prefix=require('./config').assetPrefix
-key=`${prefix}/sagebuild.json`
+key=`${prefix}/BYOD.json`
 
 if(require.main === module){
     run()
