@@ -5,7 +5,7 @@ var spawn=require('child_process').spawn
 var NAME="byod-serve"
 var env=require('./env')
 
-var env_string=lodash.toPairs(env).map(x=>`--env ${x[0]}=${x[1]}`)
+var env_string=lodash.toPairs(env).map(x=>`--env ${x[0]}=${JSON.stringify(x[1])}`)
 var args=[
     `--volume=$(realpath ../../)/mock/serve/opt:/opt`,
     `-p 8080:8080`,

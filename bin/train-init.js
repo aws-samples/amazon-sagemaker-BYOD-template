@@ -30,4 +30,9 @@ async function run(){
             hosts:["algo_1"]
         })
     )
+    try {
+        fs.mkdirSync(path.join(base,'opt','ml','model'))
+    } catch (err) {
+        if (err.code !== 'EEXIST') throw err
+    }
 }

@@ -18,9 +18,10 @@ This repository has been tested in the following environments. You can use eithe
 - see [here](https://docs.aws.amazon.com/cloud9/latest/user-guide/tutorial.html#tutorial-menu-bar) for a tour of the Cloud9 IDE.
 - run this command to update the node version on your cloud9 instance:
 ```shell
-nvm install node
+nvm install 8.9.4
+nvm alias default 8.9.4
 ```
-
+- 
 ## Setup
 
 - clone this repository
