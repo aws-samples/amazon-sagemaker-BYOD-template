@@ -46,7 +46,7 @@ cp config.js.example config.js
 | params | do not edit this field |
 
 ## Tutorial
-see the [tutorial](tutorial.md) for an end to end tutorial on developing your custom SageMaker containers!
+see the [tutorial](Tutorial.md) for an end to end tutorial on developing your custom SageMaker containers!
 
 ## Mock File System
 The mock directory contains files and folders to mock the SageMaker environment that containers run it. These directories are used to local run and test your containers. See [here](mock) for instructions on how to configure for you use case. 
