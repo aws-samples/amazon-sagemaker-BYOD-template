@@ -171,7 +171,7 @@ async function run(){
 ```shell
 ./test.js
 ```
-you will then see the response from the three request: ping,execute-parameters, and 
+you will then see the response from the three request types: ping,execute-parameters, and 
 invocations
 
 If you get errors edit your serve.py and run the following to rebuild and restart your server:
