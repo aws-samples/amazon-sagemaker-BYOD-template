@@ -48,6 +48,7 @@ module.exports=Object.assign(
                 ],
                 "Resource":[
                    {"Fn::Sub":"arn:aws:s3:::${SageBuild.Outputs.DataBucket}/*"},
+                   {"Fn::Sub":"arn:aws:s3:::${SageBuild.Outputs.CodeBucket}/*"},
                    {"Fn::Sub":"arn:aws:s3:::${AssetBucket}/*"}
                 ]
            }

@@ -3,7 +3,7 @@
 all:containers template
 
 containers:
-	make -C containers/serve; make -C containers/train
+	rm build/containers.zip; cd containers && zip -r -q ../build/containers.zip .
 
 template:
 	./template/bin/check.js

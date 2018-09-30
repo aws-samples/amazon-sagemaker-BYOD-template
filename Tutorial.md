@@ -137,6 +137,11 @@ module.exports={
     message:"hello world"
 }
 ```
+
+- go back to the root of the project 
+```shell
+cd ~/environment/amazon-sagemaker-BYOD-template
+```
 - next run
 ```shell
 ./bin/serve-init.js
@@ -184,7 +189,12 @@ if __name__ == '__main__':
 You could edit the Dockerfile to customize the server environment but we do not need to for this tutorial.
 
 ### Test Locally
-- in the /containers/server direcotory run:
+- go to the containers/serve directory
+```shell
+cd containers/serve/
+```
+
+- build your container running:
 ```shell
 make build
 ```
@@ -221,6 +231,7 @@ async function run(){
 
 - open up a new terminal (got to window->new terminal) and run the following to send test request to your server:
 ```shell
+cd amazon-sagemaker-BYOD-template/containers/serve/
 ./test.js
 ```
 you will then see the response from the three request types: ping,execute-parameters, and 

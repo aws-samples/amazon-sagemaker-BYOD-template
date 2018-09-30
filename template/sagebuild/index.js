@@ -10,6 +10,8 @@ module.exports=Object.assign({
                 "AssetBucket":{"Ref":"AssetBucket"},
                 "AssetPrefix":{"Ref":"AssetPrefix"},
                 "ConfigFramework":"BYOD",
+                "ExternalDataBucket":{"Ref":"AssetBucket"},
+                "ExternalTrainingPolicy":{"Ref":"SageBuildPolicy"},
                 "Parameters":{"Fn::Sub":JSON.stringify({
                     hyperparameters:require('../../mock/train/opt/ml/input/hyperparameters'),
                     modelhostingenvironment:require('../../containers/serve/env'),
@@ -19,6 +21,9 @@ module.exports=Object.assign({
                     trainvolumesize:"100",
                     hostinstancetype:"ml.t2.large",
                     traininstancetype:"ml.t2.large",
+                    dockerfile_path_Training:"train",
+                    dockerfile_path_Inference:"serve",
+                    ExternalCodeBucket:{"Fn::Sub":"${AssetBucket}/${AssetPrefix}/containers.zip"}
                 })}
             }
         }
@@ -35,6 +40,26 @@ module.exports=Object.assign({
                 "Bucket":{"Fn::GetAtt":["SageBuild","Outputs.DataBucket"]}
             }
         }
+    },
+    "SageBuildPolicy":{
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:*"
+              ],
+              "Resource":[
+                {"Fn::Sub":"arn:aws:s3:::${AssetBucket}/*"},
+                {"Fn::Sub":"arn:aws:s3:::${AssetBucket}"},
+              ]
+            }
+          ]
+        }
+      }
     }
 }
 )
