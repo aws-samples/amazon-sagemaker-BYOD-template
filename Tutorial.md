@@ -144,7 +144,7 @@ cd ~/environment/amazon-sagemaker-BYOD-template
 ```
 - next run
 ```shell
-./bin/serve-init.js
+./bin/serve-init.sh
 ```
 this will set up of the mock directory and copy over the /mock/train/opt/ml/model to /mock/server/opt/ml/model
 
