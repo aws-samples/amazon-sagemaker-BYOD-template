@@ -16,7 +16,7 @@ Will need to configure out train mock directory, this mocks the environment your
 ./bin/train-init.js
 ```
 
-- edit the /mock/train/opt/ml/hyperparameters.json to look like this:
+- edit the mock/train/opt/ml/input/hyperparameters.json to look like this:
 ```json
 {
     "name":"test",
@@ -24,14 +24,14 @@ Will need to configure out train mock directory, this mocks the environment your
 }
 ```
 - save your changes. 
-- edit the /mock/train/opt/ml/input/data/train.json to look like this:
+- edit the mock/train/opt/ml/input/data/train.json to look like this:
 ```json
 {
     "y":2
 }
 ```
 - save your changes
-- edit the /mock/train/opt/ml/input/inputdataconfig.json to look like this:
+- edit the mock/train/opt/ml/input/inputdataconfig.json to look like this:
 ```json
 {
     "train.json":{
@@ -98,12 +98,12 @@ with open(output_file, 'w') as outfile:
 Now you could edit the Dockerfile but we do not need to for this tutorial. 
 
 ### Test Locally
-- go to the /containers/train directory
+- go to the containers/train directory
 ```shell
 cd ./containers/train
 ```
 
-- in the /containers/train directory run
+- in the containers/train directory run
 ```shell 
 make build
 ```
@@ -118,7 +118,7 @@ If you get an error update your train.py, and re-run the previous two commands. 
 make build && ./run.sh
 ```
 
-when run successfuly you should have a file at /mock/train/opt/ml/model/model.json that looks like this
+when run successfuly you should have a file at mock/train/opt/ml/model/model.json that looks like this
 ```json
 {
     "result": 2, 
@@ -131,7 +131,7 @@ Next, we will write the server docker container. This container needs to impleme
 ### Configure Mock Direcotory
 We need to configure our serve mock directory and enviromental variables.
 
-- edit /containers/server/env.js to look like this:
+- edit containers/server/env.js to look like this:
 ```js
 module.exports={
     message:"hello world"
@@ -146,7 +146,7 @@ cd ~/environment/amazon-sagemaker-BYOD-template
 ```shell
 ./bin/serve-init.sh
 ```
-this will set up of the mock directory and copy over the /mock/train/opt/ml/model to /mock/server/opt/ml/model
+this will set up of the mock directory and copy over the mock/train/opt/ml/model to mock/server/opt/ml/model
 
 ### Write Serving Code
 Now we will write our web server
@@ -199,7 +199,7 @@ cd containers/serve/
 make build
 ```
 
-- edit the /containers/server/test.js to look like this:
+- edit the containers/server/test.js to look like this:
 ```js
 #! /usr/bin/env node
 var axios=require('axios')
