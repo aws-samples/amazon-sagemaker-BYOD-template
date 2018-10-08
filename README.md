@@ -37,6 +37,7 @@ cp config.js.example config.js
 ```
 
 - edit config.js
+
 | param | description | 
 |-------|-------------|
 |region | the AWS region to launch stacks in |
