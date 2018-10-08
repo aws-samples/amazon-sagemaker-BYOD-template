@@ -243,17 +243,42 @@ make build && ./start.js
 ```
 
 ## Testing on SageMaker
+We will now build and deploy our docker containers using [aws-sagemaker-build](https://github.com/aws-samples/aws-sagemaker-build). This project will automate all the details of building our containers, training the algorithm, and deploying the model to an Amazon SageMaker endpoint. First, go back to the root of the project.
+```shell
+cd ~/environment/amazon-sagemaker-BYOD-template
+```
 
 ### package containers
-- run make build
+We will need to package up the code for our containers into a zip file so the AWS CodeBuild can build the containers. Do this with the following command.
+```shell
+make
+```
 
 ### Launch SageBuild template
-- run npm up
+Next, we will upload our container zip files and mock data to S3 (to the AssetBucket given in your config.js). Then we will launch the SageBuild CloudFormation template. You do this with the following command:
+```shell 
+npm run up
+```
 
-### Run testing notebook
-- go to cloudformation
-- open up Jupyter notebook
-- go to notebook
-- work through that notebook to test 
+### Test
+Next, we start the build/train/deploy pipeline by publishing the to start SNS topic given by SageBuild. Do this with the following command:
+```shell
+./bin/start.js
+```
+
+You can then go to the StepFunctionURL output of the cloudformation template to follow the status of your pipeline. If you deploy fails, you can make changes to your code and redeploy by running:
+```shell
+npm run update
+```
+and then starting a new deploy by running:
+```shell
+./bin/start.js
+```
+
+When your deployment has finished successfully you can run this script to test your endpoint:
+```shell
+./bin/test.js
+```
+
 
 

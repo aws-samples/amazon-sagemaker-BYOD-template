@@ -14,7 +14,23 @@ module.exports={
         "Type":"String"
     }
   },
-  "Outputs":{},
+  "Outputs":{
+        "NoteBookURL":{
+            "Value":{"Fn::GetAtt":["SageBuild","Outputs.NoteBookUrl"]}
+        },
+        "StepFunctionURL":{
+            "Value":{"Fn::GetAtt":["SageBuild","Outputs.StepFunctionConsole"]}
+        },
+        "StartSNS":{
+            "Value":{"Fn::GetAtt":["SageBuild","Outputs.LaunchTopic"]}
+        },
+        "Endpoint":{
+            "Value":{"Fn::GetAtt":["SageBuild","Outputs.SageMakerEndpoint"]}
+        },
+        "StateMachine":{
+            "Value":{"Fn::GetAtt":["SageBuild","Outputs.StateMachine"]}
+        }
+  },
   "Resources":Object.assign(
     require('./cfn'),
     require('./sagebuild')

@@ -66,6 +66,11 @@ You can use the aws-sagemaker-build project to deploy and test your code in sage
 npm run up
 ```
 
+You start a build/deployment of you algorithm by running
+```shell
+npm run upload && ./bin/start.js
+```
+
 You can update your stack by running:
 ```shell
 npm run update

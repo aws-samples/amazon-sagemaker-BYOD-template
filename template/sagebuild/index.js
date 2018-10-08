@@ -12,32 +12,19 @@ module.exports=Object.assign({
                 "ConfigFramework":"BYOD",
                 "ExternalDataBucket":{"Ref":"AssetBucket"},
                 "ExternalTrainingPolicy":{"Ref":"SageBuildPolicy"},
+                "ExternalCodeBucket":{"Fn::Sub":"${AssetBucket}/${AssetPrefix}/containers.zip"},
                 "Parameters":{"Fn::Sub":JSON.stringify({
                     hyperparameters:require('../../mock/train/opt/ml/input/hyperparameters'),
                     modelhostingenvironment:require('../../containers/serve/env'),
-                    channels:_.fromPairs(Object.keys(require('../../mock/train/opt/ml/input/inputdataconfig.json')).map(x=>[x,{path:`data/${x}`}])),
+                    channels:_.fromPairs(Object.keys(require('../../mock/train/opt/ml/input/inputdataconfig.json')).map(x=>[x,{path:`\${AssetPrefix}/data`}])),
                     dockerfile_path_Training:"",
                     dockerfile_path_Inference:"",
                     trainvolumesize:"100",
-                    hostinstancetype:"ml.t2.large",
-                    traininstancetype:"ml.t2.large",
+                    hostinstancetype:"ml.m4.xlarge",
+                    traininstancetype:"ml.m4.xlarge",
                     dockerfile_path_Training:"train",
                     dockerfile_path_Inference:"serve",
-                    ExternalCodeBucket:{"Fn::Sub":"${AssetBucket}/${AssetPrefix}/containers.zip"}
                 })}
-            }
-        }
-    },
-    "CopyData":{
-        "Type": "Custom::ClearImage",
-        "Properties": {
-            "ServiceToken": { "Fn::GetAtt" : ["S3SyncLambda", "Arn"] },
-            src:{
-                Bucket:{"Ref":"AssetBucket"},
-                Prefix:{"Fn::Sub":"${AssetPrefix}/data" }
-            },
-            dst:{
-                "Bucket":{"Fn::GetAtt":["SageBuild","Outputs.DataBucket"]}
             }
         }
     },

@@ -5,7 +5,8 @@
   "scripts": {
     "up":"make && ./bin/upload.sh && ./template/bin/launch.js",
     "update":"make && ./bin/upload.sh && ./template/bin/update.js",
-    "down":"make && ./bin/upload.sh && ./template/bin/delete.js"
+    "down":"./template/bin/delete.js",
+    "upload":"make && ./bin/upload.sh"
   },
   "author": "",
   "license": "ISC",
