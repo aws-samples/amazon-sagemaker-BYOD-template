@@ -20,7 +20,7 @@ Will need to configure out train mock directory, this mocks the environment your
 ```json
 {
     "name":"test",
-    "x":1
+    "x":"1"
 }
 ```
 - save your changes. 
@@ -77,7 +77,7 @@ with open(train_data_file) as json_data:
 print("data")
 pp.pprint(data)
 
-result=hyperparameters["x"]*data["y"]
+result=int(hyperparameters["x"])*data["y"]
 
 model={
     "result":result,
