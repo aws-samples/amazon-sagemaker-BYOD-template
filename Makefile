@@ -1,12 +1,15 @@
-.PHONY:containers assets template
+.PHONY:containers assets template build
 
 all:containers template assets
 
-containers:
+build:
+	mkdir -p build
+
+containers: build
 	rm build/containers.zip; cd containers && zip -r -q ../build/containers.zip .
 
-template:
+template: build
 	./template/bin/check.js
 
-assets:
+assets: build
 	cp template/assets/* build && cp -r mock/train/opt/ml/input/data build
