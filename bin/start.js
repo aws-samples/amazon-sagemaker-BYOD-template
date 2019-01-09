@@ -19,7 +19,7 @@ GetOutput().then(async output=>{
 })
 .then(async output=>{
     return new Promise(async (res,rej)=>{
-        next()
+        setTimeout(x=>next(),5000)
         async function next(){
             var executions=await step.listExecutions({
                 stateMachineArn:output.StateMachine,
