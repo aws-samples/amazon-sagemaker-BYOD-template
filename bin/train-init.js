@@ -6,14 +6,14 @@ var base=path.join(path.dirname(__dirname),'mock','train')
 run()
 async function run(){
     fs.writeFileSync(
-        path.join(base,'opt','ml','input','hyperparameters.json'),
+        path.join(base,'opt','ml','input','config','hyperparameters.json'),
         JSON.stringify({
             "key":"value"
         })
     )
 
     fs.writeFileSync(
-        path.join(base,'opt','ml','input','inputdataconfig.json'),
+        path.join(base,'opt','ml','input','config','inputdataconfig.json'),
         JSON.stringify({
             train:{
                 ContentType:"application/json",

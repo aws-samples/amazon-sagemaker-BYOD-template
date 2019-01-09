@@ -4,6 +4,7 @@ In this tutorial you will write, test, and deploy a customer docker container fo
 ## Setup
 - follow the instructions under "Prerequisites" and "Setup" in the [README.md](README.md)
 - If you are using Cloud9, familiarze yourself with the Cloud9 IDE. You will need to run CLI commands and edit files. see [here](https://docs.aws.amazon.com/cloud9/latest/user-guide/tutorial.html) for a tutorial on Cloud9
+- If you are using JupyterLab, then you can familiarze yourself with interface by following this [tutorial](https://jupyterlab.readthedocs.io/en/stable/user/interface.html)
 
 ## Training Container Development
 First, we will create the Training container. This container will contain the code for training your algorithm, reading in data from a directory, and saving your model. 
@@ -16,7 +17,7 @@ Will need to configure out train mock directory, this mocks the environment your
 ./bin/train-init.js
 ```
 
-- edit the mock/train/opt/ml/input/hyperparameters.json to look like this:
+- edit the mock/train/opt/ml/input/config/hyperparameters.json to look like this:
 ```json
 {
     "name":"test",
@@ -31,7 +32,7 @@ Will need to configure out train mock directory, this mocks the environment your
 }
 ```
 - save your changes
-- edit the mock/train/opt/ml/input/inputdataconfig.json to look like this:
+- edit the mock/train/opt/ml/input/config/inputdataconfig.json to look like this:
 ```json
 {
     "train.json":{
@@ -57,13 +58,13 @@ pp = pprint.PrettyPrinter(indent=4)
 
 print("starting training")
 
-with open('/opt/ml/input/hyperparameters.json') as json_data:
+with open('/opt/ml/input/config/hyperparameters.json') as json_data:
     hyperparameters = json.load(json_data)
 
 print("hyperparameters")
 pp.pprint(hyperparameters)
 
-with open('/opt/ml/input/inputdataconfig.json') as json_data:
+with open('/opt/ml/input/config/inputdataconfig.json') as json_data:
     inputdata = json.load(json_data)
 
 print("inputdata")
@@ -128,8 +129,8 @@ when run successfuly you should have a file at mock/train/opt/ml/model/model.jso
 ## Serving Container Development
 Next, we will write the server docker container. This container needs to implement a basic web server with a few routes. In our example we will use a [Flask](http://flask.pocoo.org/) web server in Python.
 
-### Configure Mock Direcotory
-We need to configure our serve mock directory and enviromental variables.
+### Configure mock directory
+We need to configure our serve mock directory and environmental variables.
 
 - edit containers/server/env.js to look like this:
 ```js
@@ -140,7 +141,7 @@ module.exports={
 
 - go back to the root of the project 
 ```shell
-cd ~/environment/amazon-sagemaker-BYOD-template
+cd ../../
 ```
 - next run
 ```shell
@@ -229,7 +230,7 @@ async function run(){
 ./start.js
 ```
 
-- open up a new terminal (got to window->new terminal) and run the following to send test request to your server:
+- open up a new terminal (Cloud9:got to window->new terminal,JupyterLab:file->new->terminal) and run the following to send test request to your server:
 ```shell
 cd amazon-sagemaker-BYOD-template/containers/serve/
 ./test.js
@@ -245,7 +246,7 @@ make build && ./start.js
 ## Testing on SageMaker
 We will now build and deploy our docker containers using [aws-sagemaker-build](https://github.com/aws-samples/aws-sagemaker-build). This project will automate all the details of building our containers, training the algorithm, and deploying the model to an Amazon SageMaker endpoint. First, go back to the root of the project.
 ```shell
-cd ~/environment/amazon-sagemaker-BYOD-template
+cd ../../
 ```
 
 ### package containers
@@ -275,10 +276,36 @@ and then starting a new deploy by running:
 ./bin/start.js
 ```
 
+While that is running, edit the test script /bin/test.js to look like this:
+```js
+#! /usr/bin/env node
+var aws=require('../template/bin/aws')
+var sagemaker=new aws.SageMakerRuntime()
+var GetOutput=require('../template/bin/output').run
+
+
+GetOutput().then(async output=>{
+    var result=await sagemaker.invokeEndpoint({
+        EndpointName:output.Endpoint,
+        Body:JSON.stringify({
+            value:10 
+        })
+    }).promise()
+
+    console.log(result.Body.toString())
+})
+
+```
+
 When your deployment has finished successfully you can run this script to test your endpoint:
 ```shell
 ./bin/test.js
 ```
 
+## Clean
 
+When you are done you can tear down the aws-sagemaker-guard resources by running:
+```shell
+npm run down
+```
 

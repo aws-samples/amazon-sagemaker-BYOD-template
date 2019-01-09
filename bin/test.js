@@ -7,7 +7,9 @@ var GetOutput=require('../template/bin/output').run
 GetOutput().then(async output=>{
     var result=await sagemaker.invokeEndpoint({
         EndpointName:output.Endpoint,
-        Body:JSON.stringify({})
+        Body:JSON.stringify({
+            value:10 
+        })
     }).promise()
 
     console.log(result.Body.toString())

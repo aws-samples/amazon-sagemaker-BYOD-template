@@ -3,7 +3,10 @@
 [Amazon SageMaker](https://aws.amazon.com/sagemaker/) is a powerful tool for training machine learning models and scale and reliable deploying them. With Docker containers you make your own SageMaker Algorithms or migrate your existing models. This repository explains how to build, develop, and deploy these containers.
 
 ## Prerequisites
-This repository has been tested in the following environments. You can use either your own linux/Mac machine (local machine or on AWS) or in a [AWS Cloud9](https://aws.amazon.com/cloud9/) instance. 
+This repository has been tested in the following environments. 
+    - linux/Mac machine (local machine or on AWS) 
+    - [AWS Cloud9](https://aws.amazon.com/cloud9/) instance. 
+    - SageMaker Jupyter notebook
 
 ### Setting up your own environment
 - Run Linux. (tested on Amazon Linux)
@@ -20,13 +23,31 @@ This repository has been tested in the following environments. You can use eithe
 nvm install 8.9.4
 nvm alias default 8.9.4
 ```
-- 
+
+### Using SageMaker notebook
+1. If you don't already have a SageMaker Jupyter notebook, launch one and open up JupyterLab
+1. Under the __Git__ menu select __Open Terminal__
+1. In the terminal run
+```shell
+bash
+```
+1. In the terminal run
+```shell
+cd SageMaker
+```
+1. follow the rest of the Set up instructions below
+
 ## Setup
 
 - clone this repository
 ```shell
 git clone https://github.com/aws-samples/amazon-sagemaker-BYOD-template.git
 ```
+- go into the directory
+```shell
+cd amazon-sagemaker-BYOD-template
+```
+
 - install dependencies
 ```shell 
 npm install
@@ -42,7 +63,7 @@ cp config.js.example config.js
 |-------|-------------|
 |region | the AWS region to launch stacks in |
 |profile| the AWS credential profile to use |
-|assetBucket| The name of an S3 bucket to store artifacts |
+|assetBucket| The name of an S3 bucket to store artifacts, If you do not have a bucket create on and enter its name here. Create a bucket [here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#) and select __Create Bucket__ |
 |assetPrefix| The prefix to use when storing artifacts in the assetBucket |
 | params | do not edit this field |
 
