@@ -25,22 +25,22 @@ Will need to configure out train mock directory, this mocks the environment your
 }
 ```
 - save your changes. 
-- edit the mock/train/opt/ml/input/data/train.json to look like this:
-```json
-{
-    "y":2
-}
-```
-- save your changes
 - edit the mock/train/opt/ml/input/config/inputdataconfig.json to look like this:
 ```json
 {
-    "train.json":{
+    "train":{
         "ContentType":"application/json",
         "TrainingInputMode":"File",
         "S3DistributionType":"FullyReplicated",
         "RecordWrapperType":"None"
     }
+}
+```
+- save your changes
+- edit the mock/train/opt/ml/input/data/train/train.json to look like this:
+```json
+{
+    "y":2
 }
 ```
 - save your changes
@@ -54,6 +54,7 @@ The code and files our our training algorithm is in containers/train/code
 ```python
 import json
 import pprint
+import os
 pp = pprint.PrettyPrinter(indent=4)
 
 print("starting training")
@@ -70,9 +71,9 @@ with open('/opt/ml/input/config/inputdataconfig.json') as json_data:
 print("inputdata")
 pp.pprint(inputdata)
 
-train_data_file='/opt/ml/input/data/{}'.format(inputdata.keys()[0])
-
-with open(train_data_file) as json_data:
+train_data_folder='/opt/ml/input/data/{}'.format(inputdata.keys()[0])
+data_file=os.listdir(train_data_folder)[0]
+with open('/opt/ml/input/data/{}/{}'.format(inputdata.keys()[0],data_file)) as json_data:
     data=json.load(json_data)
     
 print("data")
@@ -230,9 +231,18 @@ async function run(){
 ./start.js
 ```
 
-- open up a new terminal (Cloud9:got to window->new terminal,JupyterLab:file->new->terminal) and run the following to send test request to your server:
+- open up a new terminal 
+    - Cloud9:go to window->new terminal
+    - JupyterLab:file->new->terminal) 
+run the following to go to the serve directory
 ```shell
-cd amazon-sagemaker-BYOD-template/containers/serve/
+#for Cloud9
+cd amazon-sagemaker-BYOD-template/containers/serve/ 
+#or for Jupyter
+cd SageMaker/amazon-sagemaker-BYOD-template/containers/serve/ 
+```
+and run the following to send test request to your server:
+```shell
 ./test.js
 ```
 you will then see the response from the three request types: ping,execute-parameters, and 
