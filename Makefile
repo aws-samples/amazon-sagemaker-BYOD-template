@@ -3,7 +3,7 @@
 all:containers template assets
 
 build:
-	mkdir -p build
+	mkdir -p build; mkdir -p ./template/build
 
 containers: build
 	rm build/containers.zip; cd containers && zip -r -q ../build/containers.zip .
