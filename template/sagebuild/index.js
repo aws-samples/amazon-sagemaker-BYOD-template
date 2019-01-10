@@ -17,7 +17,7 @@ module.exports=Object.assign({
                 "Parameters":{"Fn::Sub":JSON.stringify({
                     hyperparameters:require('../../mock/train/opt/ml/input/config/hyperparameters'),
                     modelhostingenvironment:require('../../containers/serve/env'),
-                    channels:_.fromPairs(Object.keys(require('../../mock/train/opt/ml/input/config/inputdataconfig.json')).map(x=>[x,{path:`\${AssetPrefix}/data`}])),
+                    channels:_.fromPairs(Object.keys(require('../../mock/train/opt/ml/input/config/inputdataconfig.json')).map(x=>[x,{path:`\${AssetPrefix}/data/${x}`}])),
                     dockerfile_path_Training:"",
                     dockerfile_path_Inference:"",
                     trainvolumesize:"100",

@@ -299,7 +299,8 @@ GetOutput().then(async output=>{
         EndpointName:output.Endpoint,
         Body:JSON.stringify({
             value:10 
-        })
+        }),
+        ContentType:"application/json"
     }).promise()
 
     console.log(result.Body.toString())
