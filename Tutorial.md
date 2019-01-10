@@ -72,7 +72,7 @@ print("inputdata")
 pp.pprint(inputdata)
 
 train_data_folder='/opt/ml/input/data/{}'.format(inputdata.keys()[0])
-data_file=os.listdir(train_data_folder)[0]
+data_file=[f for f in os.listdir(train_data_folder) if not f.startswith('.')][0]
 with open('/opt/ml/input/data/{}/{}'.format(inputdata.keys()[0],data_file)) as json_data:
     data=json.load(json_data)
     
