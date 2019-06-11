@@ -133,7 +133,7 @@ Next, we will write the server docker container. This container needs to impleme
 ### Configure mock directory
 We need to configure our serve mock directory and environmental variables.
 
-- edit containers/server/env.js to look like this:
+- edit containers/serve/env.js to look like this:
 ```js
 module.exports={
     message:"hello world"
