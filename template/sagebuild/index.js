@@ -5,7 +5,7 @@ module.exports=Object.assign({
         "Type" : "AWS::CloudFormation::Stack",
         "Properties" : {
             TemplateURL:{"Fn::Sub":
-                "https://s3.amazonaws.com/${AssetBucket}/${AssetPrefix}/sagebuild.json"},
+                "https://s3.amazonaws.com/aws-machine-learning-blog/artifacts/sagebuild/v1/template.json"},
             Parameters:{
                 "AssetBucket":{"Ref":"AssetBucket"},
                 "AssetPrefix":{"Ref":"AssetPrefix"},
