@@ -71,7 +71,7 @@ with open('/opt/ml/input/config/inputdataconfig.json') as json_data:
 print("inputdata")
 pp.pprint(inputdata)
 
-train_data_folder='/opt/ml/input/data/{}'.format(inputdata.keys()[0])
+train_data_folder='/opt/ml/input/data/{}'.format(list(inputdata.keys())[0])
 data_file=[f for f in os.listdir(train_data_folder) if not f.startswith('.')][0]
 with open('/opt/ml/input/data/{}/{}'.format(inputdata.keys()[0],data_file)) as json_data:
     data=json.load(json_data)
